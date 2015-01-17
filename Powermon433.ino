@@ -37,7 +37,7 @@
  - it is likely that yours is different.
  see README.md on how to check yours and set it here.
  */
-#define DEFAULT_TX_ID 0x1100
+#define DEFAULT_TX_ID 0xfff8
 
 /*
  TX_ID_LOCK - 
@@ -297,14 +297,12 @@ static void rxSetup(void)
 
 static void ookRx(void)
 {
-  
   uint16_t v;
   ATOMIC_BLOCK(ATOMIC_FORCEON)
   {
     v = pulse_433;
     pulse_433 = 0;
   }
-  
   if (v != 0)
   {
     if (decodeRxPulse(v) == 1)
@@ -317,7 +315,6 @@ static void ookRx(void)
   // If it has been more than 250ms since the last receive, dump the data
   else if (g_RxDirty && (millis() - g_RxLast) > 250U)
   {
-     
     /*
      track duration since last report
      
@@ -337,8 +334,8 @@ static void ookRx(void)
     Serial.print(F(" Total_Energy_Wh: ")); 
     Serial.print(g_TotalRxWattHours, DEC);
     Serial.print(F(" Power_W: ")); 
-    Serial.print("&power=");
-    Serial.println(g_RxWatts, DEC);
+//    Serial.print("&power=");
+    Serial.print(g_RxWatts, DEC);
 #if defined(TEMPERATURE_F)
     Serial.print(F(" Temp_F: "));
 #else 
@@ -346,26 +343,27 @@ static void ookRx(void)
 #endif /* TEMPERATURE_F */
 //    Serial.print("&temp=");
     Serial.println(g_RxTemperature, DEC);
-
     g_RxDirty = false;
   }
   else if (g_RxLast != 0 && (millis() - g_RxLast) > 32000U) { 
-    Serial.print("&power=NaN&temp=-NaN");
+    Serial.print(F("# Missed Packet"));
     g_RxLast = millis();
   }
-  
 }
 
 void setup() {
+//gnd
   pinMode(8, OUTPUT);
   digitalWrite(8, LOW);
+//shutdown
   pinMode(9, OUTPUT);
   digitalWrite(9, LOW);
+//power
   pinMode(11, OUTPUT);
   digitalWrite(11, HIGH);
   Serial.begin(38400);
   Serial.println(F("# Powermon433 built "__DATE__" "__TIME__));
-  Serial.print(F("# & Listening for Sensor ID: 0x"));
+  Serial.print(F("# Listening for Sensor ID: 0x"));
   Serial.println(DEFAULT_TX_ID, HEX);
 
   if (rf69ook_init())
@@ -377,9 +375,6 @@ void setup() {
   g_TotalRxWattHours = 0;
   g_PrintTimeDelta_ms = 0;
   g_PrintTime_ms = 0;
-  //set pint 9 to ground to enable receiver
-  pinMode(9, OUTPUT);
-  digitalWrite(9, LOW);
 }
 
 void loop()
